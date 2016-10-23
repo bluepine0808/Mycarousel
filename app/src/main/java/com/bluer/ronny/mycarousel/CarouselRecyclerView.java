@@ -16,7 +16,6 @@ public class CarouselRecyclerView extends RecyclerView {
 
     @Override
     public boolean fling(int velocityX, int velocityY) {
-        Log.e("wrg", "fling velocityX="+ velocityX);
         return super.fling(velocityX, velocityY);
     }
 }

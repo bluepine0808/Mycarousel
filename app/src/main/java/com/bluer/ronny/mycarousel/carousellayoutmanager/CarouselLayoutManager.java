@@ -646,7 +646,7 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
     /**
      * @return full item size
      */
-    protected int getScrollItemSize() {
+    public int getScrollItemSize() {
         if (VERTICAL == mOrientation) {
             return mDecoratedChildHeight;
         } else {
@@ -682,7 +682,7 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
         return Math.round(getCurrentScrollPosition()) * getScrollItemSize() - mLayoutHelper.mScrollOffset;
     }
 
-    int getOffsetForCurrentView(@NonNull final View view) {
+    public int getOffsetForCurrentView(@NonNull final View view) {
         final int position = getPosition(view);
         final int fullCircles = mLayoutHelper.mScrollOffset / (mItemsCount * getScrollItemSize());
         int fullOffset = fullCircles * mItemsCount * getScrollItemSize();

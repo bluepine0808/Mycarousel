@@ -33,8 +33,12 @@ public class CarouselSnapHelper extends LinearSnapHelper {
     public int[] calculateDistanceToFinalSnap(@NonNull RecyclerView.LayoutManager layoutManager, @NonNull View targetView) {
         int[] out = new int[2];
         CarouselLayoutManager carouselLayoutManager = (CarouselLayoutManager) layoutManager;
+<<<<<<< HEAD
         out = super.calculateDistanceToFinalSnap(layoutManager, targetView);
         Log.e("wrg", "calculateDistanceToFinalSnap out="+out[0]);
+=======
+        out[0] = -carouselLayoutManager.getOffsetForCurrentView(targetView);
+>>>>>>> add the snaphelper
         return out;
     }
 
@@ -95,7 +99,6 @@ public class CarouselSnapHelper extends LinearSnapHelper {
         if (targetPos >= itemCount) {
             targetPos = itemCount - 1;
         }
-        Log.e("wrg", "findTargetSnapPosition targetPos="+targetPos);
         return targetPos;
     }
 
@@ -103,13 +106,11 @@ public class CarouselSnapHelper extends LinearSnapHelper {
     public View findSnapView(RecyclerView.LayoutManager layoutManager) {
         CarouselLayoutManager carouselLayoutManager = (CarouselLayoutManager) layoutManager;
         int center = carouselLayoutManager.getCenterItemPosition();
-        Log.e("wrg", "center =" +center);
         return carouselLayoutManager.getViewForPosition(center);
     }
 
     @Override
     public boolean onFling(int velocityX, int velocityY) {
-        Log.e("wrg", "onFling velocityX="+velocityX);
         return super.onFling(velocityX, velocityY);
     }
 
@@ -120,10 +121,8 @@ public class CarouselSnapHelper extends LinearSnapHelper {
 
     @Override
     public int[] calculateScrollDistance(int velocityX, int velocityY) {
-        Log.e("wrg", "calculateScrollDistance velocityX="+velocityX);
         int[] out = new int[2];
         out = super.calculateScrollDistance(velocityX, velocityY);
-        Log.e("wrg", "calculateScrollDistance out="+out[0]);
 
         return out;
     }
@@ -172,7 +171,7 @@ public class CarouselSnapHelper extends LinearSnapHelper {
     private int estimateNextPositionDiffForFling(CarouselLayoutManager layoutManager,
                                                  OrientationHelper helper, int velocityX, int velocityY) {
         int[] distances = calculateScrollDistance(velocityX, velocityY);
-        float distancePerChild = computeDistancePerChild(layoutManager, helper);
+        float distancePerChild = layoutManager.getScrollItemSize();//computeDistancePerChild(layoutManager, helper);
         if (distancePerChild <= 0) {
             return 0;
         }
