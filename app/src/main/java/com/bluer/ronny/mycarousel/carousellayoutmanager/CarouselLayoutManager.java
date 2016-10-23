@@ -9,6 +9,7 @@ import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -36,7 +37,7 @@ import java.util.List;
  * <br />
  */
 @SuppressWarnings({"ClassWithTooManyMethods", "OverlyComplexClass"})
-public class CarouselLayoutManager extends RecyclerView.LayoutManager {
+public class CarouselLayoutManager extends RecyclerView.LayoutManager implements RecyclerView.SmoothScroller.ScrollVectorProvider {
 
     public static final int HORIZONTAL = OrientationHelper.HORIZONTAL;
     public static final int VERTICAL = OrientationHelper.VERTICAL;
@@ -205,7 +206,7 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager {
         startSmoothScroll(mySmoothScroller);
     }
 
-    protected PointF computeScrollVectorForPosition(final int targetPosition) {
+    public PointF computeScrollVectorForPosition(final int targetPosition) {
         if (0 == getChildCount()) {
             return null;
         }
@@ -549,6 +550,23 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager {
         }
 
         return view;
+    }
+
+    public View getViewForPosition(final  int position) {
+        for (int i = 0, size = getChildCount(); i < size; i++) {
+            final View child = getChildAt(i);
+            final  ViewGroup.LayoutParams lp = child.getLayoutParams();
+
+            if (!(lp instanceof RecyclerView.LayoutParams)) {
+                continue;
+            }
+            final RecyclerView.LayoutParams recyclerLp = (RecyclerView.LayoutParams) lp;
+            final int adapterPosition = recyclerLp.getViewAdapterPosition();
+            if (adapterPosition == position) {
+                return child;
+            }
+        }
+        return null;
     }
 
     private View findViewForPosition(final RecyclerView.Recycler recycler, final int position) {

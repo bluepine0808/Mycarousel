@@ -2,6 +2,7 @@ package com.bluer.ronny.mycarousel;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearSnapHelper;
 
 import com.bluer.ronny.mycarousel.carousellayoutmanager.CarouselLayoutManager;
 import com.bluer.ronny.mycarousel.carousellayoutmanager.CarouselZoomPostLayoutListener;
@@ -19,11 +20,12 @@ public class NavActivity extends AppCompatActivity {
         mCarouselRecyclerView = (CarouselRecyclerView) findViewById(R.id.recycler_view);
 
         mCarouselAdapter = new CarouselAdapter(this);
-        mCarouselLayoutManager = new CarouselLayoutManager(CarouselLayoutManager.HORIZONTAL, true);
+        mCarouselLayoutManager = new CarouselLayoutManager(CarouselLayoutManager.HORIZONTAL, false);
         mCarouselLayoutManager.setPostLayoutListener(new CarouselZoomPostLayoutListener());
         mCarouselRecyclerView.setLayoutManager(mCarouselLayoutManager);
         mCarouselRecyclerView.setHasFixedSize(true);
         mCarouselRecyclerView.setAdapter(mCarouselAdapter);
-        mCarouselRecyclerView.addOnScrollListener(new CenterScrollListener());
+        new CarouselSnapHelper(this).attachToRecyclerView(mCarouselRecyclerView);
+//        mCarouselRecyclerView.addOnScrollListener(new CenterScrollListener());
     }
 }
