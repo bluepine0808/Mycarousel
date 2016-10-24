@@ -20,13 +20,20 @@ public class CenterScrollListener extends RecyclerView.OnScrollListener {
         }
 
         final CarouselLayoutManager lm = (CarouselLayoutManager) layoutManager;
+        lm.setScrollState(newState);
         if (!mAutoSet) {
             if (RecyclerView.SCROLL_STATE_IDLE == newState) {
                 final int scrollNeeded = lm.getOffsetCenterView();
-                if (CarouselLayoutManager.HORIZONTAL == lm.getOrientation()) {
-                    recyclerView.smoothScrollBy(scrollNeeded, 0);
+                if (lm.getCenterItemPosition()== 0 && lm.getItemCount() > 1) {
+                    recyclerView.smoothScrollToPosition(lm.getCenterItemPosition() + 1);
+                } else if (lm.getItemCount() > 1 && (lm.getCenterItemPosition() == lm.getItemCount() -1 || lm.getCenterItemPosition() == lm.getItemCount()-2)) {
+                    recyclerView.smoothScrollToPosition(lm.getItemCount() - 2);
                 } else {
-                    recyclerView.smoothScrollBy(0, scrollNeeded);
+//                    if (CarouselLayoutManager.HORIZONTAL == lm.getOrientation()) {
+//                        recyclerView.smoothScrollBy(scrollNeeded, 0);
+//                    } else {
+//                        recyclerView.smoothScrollBy(0, scrollNeeded);
+//                    }
                 }
                 mAutoSet = true;
             }

@@ -2,6 +2,7 @@ package com.bluer.ronny.mycarousel.carousellayoutmanager;
 
 import android.content.Context;
 import android.support.v7.widget.LinearSmoothScroller;
+import android.util.DisplayMetrics;
 import android.view.View;
 
 /**
@@ -34,5 +35,10 @@ public abstract class CarouselSmoothScroller extends LinearSmoothScroller {
             return 0;
         }
         return layoutManager.getOffsetForCurrentView(view);
+    }
+
+    @Override
+    protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
+        return 0.3f;
     }
 }

@@ -14,6 +14,10 @@ import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+
+import com.bluer.ronny.mycarousel.R;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -49,6 +53,7 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
 
     private Integer mDecoratedChildWidth;
     private Integer mDecoratedChildHeight;
+    private Integer mDecoratedChildPadding;
 
     private final int mOrientation;
     private final boolean mCircleLayout;
@@ -64,6 +69,8 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
     private int mItemsCount;
 
     private CarouselSavedState mPendingCarouselSavedState;
+
+    private int mScrollState = RecyclerView.SCROLL_STATE_IDLE;
 
     /**
      * @param orientation should be {@link #VERTICAL} or {@link #HORIZONTAL}
@@ -235,6 +242,17 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
         return scrollBy(dx, recycler, state);
     }
 
+
+    public int getScrollState() {
+        return mScrollState;
+    }
+
+    public void setScrollState(int state) {
+        if (state == mScrollState) {
+            return;
+        }
+        mScrollState = state;
+    }
     /**
      * This method is called from {@link #scrollHorizontallyBy(int, RecyclerView.Recycler, RecyclerView.State)} and
      * {@link #scrollVerticallyBy(int, RecyclerView.Recycler, RecyclerView.State)} to calculate needed scroll that is allowed. <br />
@@ -267,7 +285,7 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
 
             mLayoutHelper.mScrollOffset -= resultScroll;
         } else {
-            final int maxOffset = getMaxScrollOffset();
+            final int maxOffset = getMaxScrollOffset()- mDecoratedChildWidth *5/8;//(mDecoratedChildWidth -mDecoratedChildPadding)/2;
 
             if (0 > mLayoutHelper.mScrollOffset + diff) {
                 resultScroll = -mLayoutHelper.mScrollOffset; //to make it 0
@@ -279,7 +297,7 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
         }
         if (0 != resultScroll) {
             mLayoutHelper.mScrollOffset += resultScroll;
-            fillData(recycler, state, false);
+            fillData(recycler, state, false, false);
         }
         return resultScroll;
     }
@@ -312,12 +330,14 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
 
         boolean childMeasuringNeeded = false;
         if (null == mDecoratedChildWidth) {
-            final View view = recycler.getViewForPosition(0);
+            final View view = recycler.getViewForPosition(1);
             addView(view);
             measureChildWithMargins(view, 0, 0);
 
             mDecoratedChildWidth = getDecoratedMeasuredWidth(view);
             mDecoratedChildHeight = getDecoratedMeasuredHeight(view);
+            mDecoratedChildPadding = view.getContext().getResources().getDimensionPixelSize(R.dimen.tab_card_item_padding);
+
             removeAndRecycleView(view, recycler);
 
             if (INVALID_POSITION == mPendingScrollPosition && null == mPendingCarouselSavedState) {
@@ -338,15 +358,20 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
             mLayoutHelper.mScrollOffset = calculateScrollForSelectingPosition(mCenterItemPosition, state);
         }
 
-        fillData(recycler, state, childMeasuringNeeded);
+        fillData(recycler, state, childMeasuringNeeded, true);
     }
 
     private int calculateScrollForSelectingPosition(final int itemPosition, final RecyclerView.State state) {
-        final int fixedItemPosition = itemPosition < state.getItemCount() ? itemPosition : state.getItemCount() - 1;
+        final int fixedItemPosition;
+        if (itemPosition == state.getItemCount() -1) {
+            fixedItemPosition = itemPosition -1;
+        } else {
+            fixedItemPosition = itemPosition < state.getItemCount() ? itemPosition : state.getItemCount() - 1;
+        }
         return VERTICAL == mOrientation ? fixedItemPosition * mDecoratedChildHeight : fixedItemPosition * mDecoratedChildWidth;
     }
 
-    private void fillData(@NonNull final RecyclerView.Recycler recycler, @NonNull final RecyclerView.State state, final boolean childMeasuringNeeded) {
+    private void fillData(@NonNull final RecyclerView.Recycler recycler, @NonNull final RecyclerView.State state, final boolean childMeasuringNeeded, final boolean animate) {
         final float currentScrollPosition = getCurrentScrollPosition();
         generateLayoutOrder(currentScrollPosition, state);
         removeAndRecycleUnusedViews(mLayoutHelper, recycler);
@@ -356,7 +381,7 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
         if (VERTICAL == mOrientation) {
             fillDataVertical(recycler, width, height, childMeasuringNeeded);
         } else {
-            fillDataHorizontal(recycler, width, height, childMeasuringNeeded);
+            fillDataHorizontal(recycler, width, height, childMeasuringNeeded, animate);
         }
 
         recycler.clear();
@@ -396,11 +421,11 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
             final int offset = getCardOffsetByPositionDiff(layoutOrder.mItemPositionDiff);
             final int top = centerViewTop + offset;
             final int bottom = top + mDecoratedChildHeight;
-            fillChildItem(start, top, end, bottom, layoutOrder, recycler, i, childMeasuringNeeded);
+            fillChildItem(start, top, end, bottom, layoutOrder, recycler, i, childMeasuringNeeded, false);
         }
     }
 
-    private void fillDataHorizontal(final RecyclerView.Recycler recycler, final int width, final int height, final boolean childMeasuringNeeded) {
+    private void fillDataHorizontal(final RecyclerView.Recycler recycler, final int width, final int height, final boolean childMeasuringNeeded, final boolean animate) {
         final int top = (height - mDecoratedChildHeight) / 2;
         final int bottom = top + mDecoratedChildHeight;
 
@@ -411,7 +436,7 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
             final int offset = getCardOffsetByPositionDiff(layoutOrder.mItemPositionDiff);
             final int start = centerViewStart + offset;
             final int end = start + mDecoratedChildWidth;
-            fillChildItem(start, top, end, bottom, layoutOrder, recycler, i, childMeasuringNeeded);
+            fillChildItem(start, top, end, bottom, layoutOrder, recycler, i, childMeasuringNeeded, animate);
         }
     }
 
@@ -437,7 +462,7 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
     }
 
     @SuppressWarnings("MethodWithTooManyParameters")
-    private void fillChildItem(final int start, final int top, final int end, final int bottom, @NonNull final LayoutOrder layoutOrder, @NonNull final RecyclerView.Recycler recycler, final int i, final boolean childMeasuringNeeded) {
+    private void fillChildItem(final int start, final int top, final int end, final int bottom, @NonNull final LayoutOrder layoutOrder, @NonNull final RecyclerView.Recycler recycler, final int i, final boolean childMeasuringNeeded, final boolean animate) {
         final View view = bindChild(layoutOrder.mItemAdapterPosition, recycler, childMeasuringNeeded);
         ViewCompat.setElevation(view, i);
         ItemTransformation transformation = null;
@@ -453,8 +478,21 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
             ViewCompat.setScaleX(view, transformation.mScaleX);
             ViewCompat.setScaleY(view, transformation.mScaleY);
         }
+        if (animate && layoutOrder.mItemPositionDiff < 0) {
+            setAnimation(view, layoutOrder.mItemAdapterPosition);
+        }
     }
+    private void setAnimation(View viewToAnimate, int position)
+    {
 
+        // If the bound view wasn't previously displayed on screen, it's animated
+//        if (position > lastPosition)
+//        {
+//            Animation animation = AnimationUtils.loadAnimation(viewToAnimate.getContext(), R.anim.slide_in_left);
+//            viewToAnimate.startAnimation(animation);
+//            lastPosition = position;
+//        }
+    }
     /**
      * @return current scroll position of center item. this value can be in any range if it is cycle layout.
      * if this is not, that then it is in [0, {@link #mItemsCount - 1}]
@@ -516,13 +554,13 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
             mLayoutHelper.initLayoutOrder(layoutCount);
 
             for (int i = firstVisible; i <= lastVisible; ++i) {
-                if (i == centerItem) {
-                    mLayoutHelper.setLayoutOrder(layoutCount - 1, i, i - absCurrentScrollPosition);
-                } else if (i < centerItem) {
-                    mLayoutHelper.setLayoutOrder(i - firstVisible, i, i - absCurrentScrollPosition);
-                } else {
-                    mLayoutHelper.setLayoutOrder(layoutCount - (i - centerItem) - 1, i, i - absCurrentScrollPosition);
-                }
+//                if (i == centerItem) {
+//                    mLayoutHelper.setLayoutOrder(layoutCount - 1, i, i - absCurrentScrollPosition);
+//                } else if (i < centerItem) {
+                    mLayoutHelper.setLayoutOrder(lastVisible - i, i, i - absCurrentScrollPosition);
+//                } else {
+//                    mLayoutHelper.setLayoutOrder(layoutCount - (i - centerItem) - 1, i, i - absCurrentScrollPosition);
+//                }
             }
         }
     }
@@ -608,9 +646,9 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
 
         final int dimenDiff;
         if (VERTICAL == mOrientation) {
-            dimenDiff = (getHeightNoPadding() - mDecoratedChildHeight) / 2;
+            dimenDiff = mDecoratedChildHeight *2/5;// - mDecoratedChildPadding;
         } else {
-            dimenDiff = (getWidthNoPadding() - mDecoratedChildWidth) / 2;
+            dimenDiff = mDecoratedChildWidth *2/5;//- mDecoratedChildPadding;
         }
         //noinspection NumericCastThatLosesPrecision
         return (int) Math.round(Math.signum(itemPositionDiff) * dimenDiff * smoothPosition);
@@ -631,15 +669,20 @@ public class CarouselLayoutManager extends RecyclerView.LayoutManager implements
     protected double convertItemPositionDiffToSmoothPositionDiff(final float itemPositionDiff) {
         // generally item moves the same way above center and bellow it. So we don't care about diff sign.
         final float absIemPositionDiff = Math.abs(itemPositionDiff);
+//
+//        final float absCurrentScrollPosition = layoutOrder.mItemAdapterPosition -layoutOrder.mItemPositionDiff;
+//        if (layoutOrder.mItemPositionDiff >= 1) {
+//            return StrictMath.pow(absIemPositionDiff / mLayoutHelper.mMaxVisibleItems, 1 / 3.0f);
+//        } else if (layoutOrder.mItemPositionDiff > 0) {
+//            return StrictMath.pow(absIemPositionDiff / mLayoutHelper.mMaxVisibleItems, 1 / 2.0f);
+//        } else {
+//            return absIemPositionDiff * StrictMath.pow((lastAdapterPosition + 1 - layoutOrder.mItemAdapterPosition), 2)/4;
+//        }
 
-        // we detect if this item is close for center or not. We use (1 / maxVisibleItem) ^ (1/3) as close definer.
-        if (absIemPositionDiff > StrictMath.pow(1.0f / mLayoutHelper.mMaxVisibleItems, 1.0f / 3)) {
-            // this item is far from center line, so we should make it move like square root function
-            return StrictMath.pow(absIemPositionDiff / mLayoutHelper.mMaxVisibleItems, 1 / 2.0f);
+        if (itemPositionDiff <= 0) {
+            return StrictMath.pow(0.4f, itemPositionDiff) - 1;
         } else {
-            // this item is close from center line. we should slow it down and don't make it speed up very quick.
-            // so square function in range of [0, (1/maxVisible)^(1/3)] is quite good in it;
-            return StrictMath.pow(absIemPositionDiff, 2.0f);
+            return 1 - StrictMath.pow(0.7f, itemPositionDiff);
         }
     }
 

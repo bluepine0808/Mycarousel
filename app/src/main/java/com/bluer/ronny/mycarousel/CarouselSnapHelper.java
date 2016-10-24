@@ -19,11 +19,6 @@ import com.bluer.ronny.mycarousel.carousellayoutmanager.CarouselLayoutManager;
 public class CarouselSnapHelper extends LinearSnapHelper {
     private Context mContext;
     private static final float INVALID_DISTANCE = 1f;
-    // Orientation helpers are lazily created per LayoutManager.
-    @Nullable
-    private OrientationHelper mVerticalHelper;
-    @Nullable
-    private OrientationHelper mHorizontalHelper;
 
     public CarouselSnapHelper(Context mContext) {
         this.mContext = mContext;
@@ -73,8 +68,7 @@ public class CarouselSnapHelper extends LinearSnapHelper {
 
         int vDeltaJump = 0, hDeltaJump;
         if (carouselLayoutManager.canScrollHorizontally()) {
-            hDeltaJump = estimateNextPositionDiffForFling(carouselLayoutManager,
-                    getHorizontalHelper(layoutManager), velocityX, 0);
+            hDeltaJump = estimateNextPositionDiffForFling(carouselLayoutManager, velocityX, 0);
             if (vectorForEnd.x < 0) {
                 hDeltaJump = -hDeltaJump;
             }
@@ -122,51 +116,9 @@ public class CarouselSnapHelper extends LinearSnapHelper {
         return out;
     }
 
-
-    private float computeDistancePerChild(CarouselLayoutManager layoutManager, OrientationHelper helper) {
-        View minPosView = null;
-        View maxPosView = null;
-        int minPos = Integer.MAX_VALUE;
-        int maxPos = Integer.MIN_VALUE;
-        int childCount = layoutManager.getChildCount();
-        if (childCount == 0) {
-            return INVALID_DISTANCE;
-        }
-
-        for (int i = 0; i < childCount; i++) {
-            View child = layoutManager.getChildAt(i);
-            final int pos = layoutManager.getPosition(child);
-            if (pos == RecyclerView.NO_POSITION) {
-                continue;
-            }
-            if (pos < minPos) {
-                minPos = pos;
-                minPosView = child;
-            }
-            if (pos > maxPos) {
-                maxPos = pos;
-                maxPosView = child;
-            }
-        }
-        if (minPosView == null || maxPosView == null) {
-            return INVALID_DISTANCE;
-        }
-        int start = Math.min(helper.getDecoratedStart(minPosView),
-                helper.getDecoratedStart(maxPosView));
-        int end = Math.max(helper.getDecoratedEnd(minPosView),
-                helper.getDecoratedEnd(maxPosView));
-        int distance = end - start;
-        if (distance == 0) {
-            return INVALID_DISTANCE;
-        }
-        return 1f * distance / ((maxPos - minPos) + 1);
-    }
-
-
-    private int estimateNextPositionDiffForFling(CarouselLayoutManager layoutManager,
-                                                 OrientationHelper helper, int velocityX, int velocityY) {
+    private int estimateNextPositionDiffForFling(CarouselLayoutManager layoutManager, int velocityX, int velocityY) {
         int[] distances = calculateScrollDistance(velocityX, velocityY);
-        float distancePerChild = layoutManager.getScrollItemSize();//computeDistancePerChild(layoutManager, helper);
+        float distancePerChild = layoutManager.getScrollItemSize();
         if (distancePerChild <= 0) {
             return 0;
         }
@@ -175,13 +127,4 @@ public class CarouselSnapHelper extends LinearSnapHelper {
         return (int) Math.floor(distance / distancePerChild);
     }
 
-
-    @NonNull
-    private OrientationHelper getHorizontalHelper(
-            @NonNull RecyclerView.LayoutManager layoutManager) {
-        if (mHorizontalHelper == null) {
-            mHorizontalHelper = OrientationHelper.createHorizontalHelper(layoutManager);
-        }
-        return mHorizontalHelper;
-    }
 }
