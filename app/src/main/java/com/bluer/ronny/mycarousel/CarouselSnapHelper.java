@@ -33,12 +33,7 @@ public class CarouselSnapHelper extends LinearSnapHelper {
     public int[] calculateDistanceToFinalSnap(@NonNull RecyclerView.LayoutManager layoutManager, @NonNull View targetView) {
         int[] out = new int[2];
         CarouselLayoutManager carouselLayoutManager = (CarouselLayoutManager) layoutManager;
-<<<<<<< HEAD
-        out = super.calculateDistanceToFinalSnap(layoutManager, targetView);
-        Log.e("wrg", "calculateDistanceToFinalSnap out="+out[0]);
-=======
         out[0] = -carouselLayoutManager.getOffsetForCurrentView(targetView);
->>>>>>> add the snaphelper
         return out;
     }
 
